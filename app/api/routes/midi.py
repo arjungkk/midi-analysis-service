@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks
 from datetime import datetime
 
 from app.db.mongodb import db
@@ -8,6 +8,9 @@ from app.utils.hashing import compute_file_hash
 
 from app.services.transformation_service import MidiTransformationService
 import time
+
+from bson import ObjectId
+from app.workers.transformation_worker import run_transformation
 
 
 router = APIRouter(prefix="/midi", tags=["midi"])
@@ -48,7 +51,6 @@ async def upload_midi(file: UploadFile = File(...)):
         }
     }
 
-from bson import ObjectId
 
 @router.get("/{midi_id}")
 def get_midi_analysis(midi_id: str):    
@@ -60,57 +62,86 @@ def get_midi_analysis(midi_id: str):
     midi["_id"] = str(midi["_id"])
     return midi
 
-@router.post("/{midi_id}/transform/transpose")
-def transpose_midi(midi_id: str, semitones: int):
+
+@router.post("/{midi_id}/transpose")
+def transpose_midi(
+    midi_id: str,
+    semitones: int,
+    background_tasks: BackgroundTasks
+):
     midi = db.midi_files.find_one({"_id": ObjectId(midi_id)})
     if not midi:
         raise HTTPException(status_code=404, detail="MIDI not found")
 
-    result = transform_service.transpose(
-        source_path=midi["storage_path"],
-        semitones=semitones
-    )
-
-    doc = {
-        "source_midi_id": midi["_id"],
+    job = {
+        "midi_id": midi["_id"],
         "type": "transpose",
         "parameters": {"semitones": semitones},
-        "output_path": result["output_path"],
-        "processing_time_ms": result["processing_time_ms"],
+        "status": "pending",
         "created_at": datetime.utcnow()
     }
 
-    insert = db.transformations.insert_one(doc)
+    result = db.transformations.insert_one(job)
+
+    background_tasks.add_task(
+        run_transformation,
+        result.inserted_id,
+        midi["storage_path"],
+        "transpose",
+        {"semitones": semitones}
+    )
 
     return {
-        "transformation_id": str(insert.inserted_id),
-        "output_path": result["output_path"]
+        "job_id": str(result.inserted_id),
+        "status": "accepted"
     }
 
-@router.post("/{midi_id}/transform/tempo")
-def change_tempo(midi_id: str, tempo_multiplier: float):
+
+@router.post("/{midi_id}/tempo")
+def change_tempo(
+    midi_id: str,
+    factor: float,
+    background_tasks: BackgroundTasks
+):
+    if factor <= 0:
+        raise HTTPException(status_code=400, detail="Factor must be > 0")
+
     midi = db.midi_files.find_one({"_id": ObjectId(midi_id)})
     if not midi:
         raise HTTPException(status_code=404, detail="MIDI not found")
 
-    result = transform_service.change_tempo(
-        source_path=midi["storage_path"],
-        tempo_multiplier=tempo_multiplier
-    )
-
-    doc = {
-        "source_midi_id": midi["_id"],
+    job = {
+        "midi_id": midi["_id"],
         "type": "tempo_change",
-        "parameters": {"tempo_multiplier": tempo_multiplier},
-        "output_path": result["output_path"],
-        "processing_time_ms": result["processing_time_ms"],
+        "parameters": {"factor": factor},
+        "status": "pending",
         "created_at": datetime.utcnow()
     }
 
-    insert = db.transformations.insert_one(doc)
+    result = db.transformations.insert_one(job)
+
+    background_tasks.add_task(
+        run_transformation,
+        result.inserted_id,
+        midi["storage_path"],
+        "tempo_change",
+        {"factor": factor}
+    )
 
     return {
-        "transformation_id": str(insert.inserted_id),
-        "output_path": result["output_path"]
+        "job_id": str(result.inserted_id),
+        "status": "accepted"
     }
+
+
+@router.get("/transformations/{job_id}")
+def get_transformation_status(job_id: str):
+    job = db.transformations.find_one({"_id": ObjectId(job_id)})
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    job["_id"] = str(job["_id"])
+    job["midi_id"] = str(job["midi_id"])
+    return job
+
 

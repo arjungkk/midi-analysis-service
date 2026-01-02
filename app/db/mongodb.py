@@ -1,8 +1,5 @@
-from pymongo import MongoClient
 import os
+from pymongo import MongoClient
 
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-DB_NAME = os.getenv("DB_NAME", "midi_db")
-
-client = MongoClient(MONGO_URI)
-db = client[DB_NAME]
+client = MongoClient(os.getenv("MONGODB_URI"))
+db = client[os.getenv("MONGODB_DB", "midi_db")]

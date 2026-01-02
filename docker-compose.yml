@@ -1,7 +1,22 @@
+version: "3.9"
+
 services:
-  mongodb:
-    image: mongo:7
-    container_name: midi-mongodb
+  api:
+    build: .
+    container_name: midi-api
+    ports:
+      - "8000:8000"
+    environment:
+      MONGODB_URI: mongodb://mongo:27017
+      MONGODB_DB: midi_db
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:6
+    container_name: midi-mongo
     ports:
       - "27017:27017"
     volumes:
