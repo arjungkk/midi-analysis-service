@@ -4,21 +4,21 @@ A production-oriented backend service for ingesting, analyzing, and transforming
 
 ---
 
-## 🚀 Key Features
+## Key Features
 
-* Upload and persist MIDI files
-* Asynchronous background transformations (non-blocking API)
-* Musical transformations:
+- Upload and persist MIDI files
+- Asynchronous background transformations (non-blocking API)
+- Musical transformations:
 
-  * Pitch transposition
-  * Tempo scaling
-* MongoDB-backed job & metadata tracking
-* Deterministic, mathematical pytest validation
-* Dockerized API + database (one-command startup)
+  - Pitch transposition
+  - Tempo scaling
+- MongoDB-backed job & metadata tracking
+- Deterministic, mathematical pytest validation
+- Dockerized API + database (one-command startup)
 
 ---
 
-## 🧠 Architecture Overview
+## Architecture Overview
 
 ```
                 ┌──────────────┐
@@ -53,7 +53,7 @@ A production-oriented backend service for ingesting, analyzing, and transforming
         │ (Docker vol) │
         └──────────────┘
 
- 
+``` 
 - **FastAPI** for the API layer  
 - **Async background tasks** for compute isolation  
 - **MongoDB** for job and metadata tracking  
