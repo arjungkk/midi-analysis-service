@@ -6,4 +6,4 @@ python-multipart
 pretty_midi
 numpy
 python-dotenv
-pytest>=7.0
+pytest

@@ -43,7 +43,7 @@ async def upload_midi(file: UploadFile = File(...)):
     result = db.midi_files.insert_one(midi_doc)
 
     return {
-        "id": str(result.inserted_id),
+        "midi_id": str(result.inserted_id),
         "filename": file.filename,
         "analysis_summary": {
             "tempo_bpm": analysis["tempo_bpm"],
