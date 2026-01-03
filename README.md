@@ -53,136 +53,80 @@ A production-oriented backend service for ingesting, analyzing, and transforming
         │ (Docker vol) │
         └──────────────┘
 
- MongoDB is used throughout to persist:
- - MIDI metadata
- - Transformation jobs
- - Status, timing, output paths
-```
-
-**Design principles:**
-
-* Stateless API layer
-* Asynchronous execution boundary
-* Pure, testable domain logic
-* Explicit job state tracking
+ 
+- **FastAPI** for the API layer  
+- **Async background tasks** for compute isolation  
+- **MongoDB** for job and metadata tracking  
+- **Filesystem / Docker volume** for MIDI files  
 
 ---
 
-## 🧩 Tech Stack
+## Supported Transformations
 
-* **Language:** Python 3.11
-* **API:** FastAPI
-* **Async execution:** FastAPI BackgroundTasks
-* **MIDI processing:** pretty_midi
-* **Database:** MongoDB
-* **Testing:** pytest
-* **Containerization:** Docker, docker-compose
+- **Transpose**: Shifts all note pitches by a fixed number of semitones  
+- **Tempo Change**: Scales MIDI timing while preserving musical structure  
+
+Transformations are deterministic and validated with automated tests.
 
 ---
 
-## 📁 Project Structure
+## Async Processing Model
 
-```
-app/
-├── api/
-│   └── routes/
-│       └── midi.py        # HTTP endpoints
-├── services/
-│   └── midi_transformation_service.py
-├── workers/
-│   └── transformation_tasks.py
-├── db/
-│   └── mongodb.py
-├── main.py
+- API requests return immediately with a job reference
+- Transformations run in the background
+- Clients poll job status or fetch results when ready
 
-tests/
-├── conftest.py
-├── test_transpose.py
-├── test_tempo_change.py
-
-Dockerfile
-docker-compose.yml
-requirements.txt
-```
+This ensures predictable API latency regardless of processing time.
 
 ---
 
-## 🔄 Async Transformation Flow
+## Testing & CI
 
-1. Client uploads a MIDI file
-2. Client requests a transformation (transpose / tempo)
-3. API immediately returns `job_id`
-4. Transformation runs asynchronously in background
-5. Job status + output path persisted in MongoDB
-6. Client polls job endpoint for completion
-
-This pattern mirrors real-world **data pipeline and ML inference systems**.
+- Pytest-based tests validate pitch and tempo mathematically
+- GitHub Actions CI runs tests on every push and pull request
+- MongoDB is started as a service container during CI
 
 ---
 
-## 🧪 Testing Strategy
+## Docker & Deployment
 
-Transformations are validated **mathematically**:
+The service is fully containerized and can be deployed locally or in cloud environments.
 
-* **Transpose:**
-
-  * Assert `output_pitch == input_pitch + semitones`
-* **Tempo change:**
-
-  * Assert `output_duration == input_duration / factor`
-
-Tests use:
-
-* Deterministic MIDI fixtures
-* `tmp_path` isolation
-* Black-box testing of domain logic
-
-Run tests:
-
-```bash
-pytest -v
-```
+Designed to evolve toward:
+- Dedicated worker processes
+- Object storage (e.g. S3)
+- Kubernetes-based scaling
 
 ---
 
-## 🐳 Running with Docker
+## Performance & Scaling (Summary)
 
-```bash
-docker compose build
-docker compose up
-```
-
-API available at:
-
-```
-http://localhost:8000
-```
-
-MongoDB available at:
-
-```
-localhost:27017
-```
+- Lightweight, CPU-bound MIDI processing
+- Async execution prevents API blocking
+- Clear scaling path for throughput, compute, and storage
+- MongoDB used only for metadata (no binary data)
 
 ---
 
-## 🔮 Future Extensions
+## Future Work
 
-* Replace BackgroundTasks with Celery / Redis
-* Chain transformations (pipeline DAG)
-* Audio rendering / preview generation
-* Model-based MIDI analysis (ML features)
-* Web frontend for browsing transformations
+- Symbolic music embeddings and similarity search
+- ML-powered music analysis and transformations
+- Hybrid symbolic + audio pipelines
+- Research-to-production ML workflows
 
 ---
 
-## 👤 Author
+## Why This Project
 
-Built by a Lead/Senior Software Engineer with experience in:
+This project demonstrates:
+- Async-first backend design
+- Clean separation of concerns
+- Production-oriented thinking
+- A clear path from symbolic processing to music-AI systems
 
-* Distributed systems
-* Data-intensive pipelines
-* AI-driven platforms
-* Music technology
+---
 
-This project is intentionally scoped to demonstrate **production engineering quality**, not just musical features.
+## Author
+
+Arjun Gopalakrishnan
