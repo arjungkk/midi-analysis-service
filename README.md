@@ -99,7 +99,7 @@ Designed to evolve toward:
 
 ---
 
-## Performance & Scaling (Summary)
+## Performance & Scaling
 
 - Lightweight, CPU-bound MIDI processing
 - Async execution prevents API blocking
@@ -114,16 +114,6 @@ Designed to evolve toward:
 - ML-powered music analysis and transformations
 - Hybrid symbolic + audio pipelines
 - Research-to-production ML workflows
-
----
-
-## Why This Project
-
-This project demonstrates:
-- Async-first backend design
-- Clean separation of concerns
-- Production-oriented thinking
-- A clear path from symbolic processing to music-AI systems
 
 ---
 
